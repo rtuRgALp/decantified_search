@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Find your next fragrance by mood, notes, and style, then sample it at Decantified.">
+  <meta name="theme-color" content="#171511">
+  <title>Decantified — Find your next scent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css"><script defer src="app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#discover">Skip to fragrances</a>
+  <header class="site-header">
+    <a class="wordmark" href="#top" aria-label="Decantified scent finder home"><i aria-hidden="true"></i>DECANTIFIED</a>
+    <nav aria-label="Primary"><a href="#discover">Explore</a><a class="shop-link" href="https://decantified.com?utm_source=scent_finder&utm_medium=referral&utm_campaign=discover" target="_blank" rel="noopener">Shop samples ↗</a></nav>
+  </header>
+  <main id="top">
+    <section class="hero" aria-labelledby="hero-title">
+      <p class="eyebrow">Your scent, without the guesswork</p>
+      <h1 id="hero-title">Find a fragrance<br>that feels like <em>you.</em></h1>
+      <p class="hero-copy">Explore by mood and notes. Discover a few promising matches, then try a sample before committing to the bottle.</p>
+      <div class="hero-actions"><a class="button primary" href="#discover">Start exploring ↓</a><button class="text-button" id="surpriseHero">Surprise me ✦</button></div>
+      <div class="bottle bottle-one" aria-hidden="true"><span></span></div><div class="bottle bottle-two" aria-hidden="true"><span></span></div>
+    </section>
+    <section class="discovery" id="discover" aria-labelledby="discover-title">
+      <div class="section-heading"><div><p class="eyebrow">The scent edit</p><h2 id="discover-title">What are you drawn to?</h2></div><p>Choose a feeling or search a note. There are no wrong answers.</p></div>
+      <div class="filter-panel" aria-label="Fragrance filters">
+        <div class="mood-filters" id="moodFilters" role="group" aria-label="Filter by mood">
+          <button class="chip active" data-mood="all">All scents</button><button class="chip" data-mood="fresh">◌ Fresh</button><button class="chip" data-mood="warm">☼ Warm</button><button class="chip" data-mood="bold">◆ Bold</button><button class="chip" data-mood="smooth">〰 Smooth</button>
+        </div>
+        <label class="search-box"><span aria-hidden="true">⌕</span><span class="sr-only">Search scents and notes</span><input id="searchInput" type="search" placeholder="Search a note, scent, or inspiration…"></label>
+      </div>
+      <div class="results-bar" aria-live="polite"><p><strong id="resultCount">0</strong> fragrances to explore</p><button class="text-button" id="clearFilters" hidden>Clear filters</button></div>
+      <div class="product-grid" id="productGrid"></div>
+      <div class="empty-state" id="emptyState" hidden><b aria-hidden="true">○</b><h3>No exact match — yet.</h3><p>Try a broader note such as vanilla, cedar, citrus, or musk.</p><button class="button secondary" id="emptyReset">Show all scents</button></div>
+      <div class="load-more-wrap"><button class="button secondary" id="loadMore">Show more scents</button></div>
+    </section>
+    <section class="how" aria-labelledby="how-title">
+      <p class="eyebrow">Try before you commit</p><h2 id="how-title">A better way to meet your next signature.</h2>
+      <div class="steps"><article><span>01</span><h3>Explore</h3><p>Follow your nose through moods, notes, and inspirations.</p></article><article><span>02</span><h3>Sample</h3><p>Start small with an authentic decant delivered to your door.</p></article><article><span>03</span><h3>Live with it</h3><p>See how it develops on your skin before buying a full bottle.</p></article></div>
+      <a class="button light" href="https://decantified.com?utm_source=scent_finder&utm_medium=referral&utm_campaign=how_it_works" target="_blank" rel="noopener">Browse all samples ↗</a>
+    </section>
+  </main>
+  <footer><div class="wordmark"><i aria-hidden="true"></i>DECANTIFIED</div><p>Find it. Sample it. Make it yours.</p><a href="https://decantified.com?utm_source=scent_finder&utm_medium=referral&utm_campaign=footer" target="_blank" rel="noopener">Decantified.com ↗</a></footer>
+  <dialog id="scentDialog" aria-labelledby="dialogTitle"><button class="dialog-close" id="dialogClose" aria-label="Close details">×</button><div id="dialogContent"></div></dialog>
+  <noscript><p class="noscript">This finder needs JavaScript. Browse at <a href="https://decantified.com">Decantified.com</a>.</p></noscript>
+</body>
+</html>

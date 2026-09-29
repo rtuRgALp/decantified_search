@@ -1,0 +1,2 @@
+# The current scraper only uses the Python standard library.
+# Add third-party packages here if future utilities need them.
