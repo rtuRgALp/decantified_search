@@ -1,0 +1,8 @@
+{
+  "name": "decantified-scent-finder",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/finder-core.test.mjs"
+  }
+}
