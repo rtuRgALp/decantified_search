@@ -12,6 +12,13 @@ export function normalizeTerm(value = "") {
 export function splitNoteTerms(value = "") {
   return [...new Set(value.split(/\s*(?:,|;|\/|\||•|\band\b)\s*/i).map(normalizeTerm).map(term => term.replace(/^(?:notes? of|a hint of|touch of)\s+/, "")).filter(term => term && !["note", "notes"].includes(term)))];
 }
+export function resolveBankQuery(entries, query) {
+  const normalized = normalizeTerm(query);
+  if (!normalized) return [];
+  const exact = entries.find(entry => entry.term === normalized);
+  if (exact) return [exact];
+  return entries.filter(entry => entry.term.includes(normalized));
+}
 export function containsTerm(text, term) {
   const haystack = ` ${normalizeTerm(text)} `;
   const needle = normalizeTerm(term);
