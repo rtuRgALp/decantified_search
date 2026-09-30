@@ -42,15 +42,15 @@ export function eauFraicheSimilarity(product) {
   });
   return { score: Math.round(100 * traits.length / total), traits };
 }
-export function filterProducts(products, selections, matchMode = "any", maxScore = 25) {
+export function filterProducts(products, selections, matchMode = "any", maxScore = null) {
   if (!selections.length) return [];
   return products.map(product => {
     const matches = selections.map(selection => ({ ...selection, fields: selectionMatches(product, selection) }));
     const matchedCount = matches.filter(match => match.fields.length).length;
-    const similarity = eauFraicheSimilarity(product);
+    const similarity = maxScore === null ? null : eauFraicheSimilarity(product);
     return { ...product, matches, matchedCount, similarity };
-  }).filter(product => (matchMode === "all" ? product.matchedCount === selections.length : product.matchedCount > 0) && product.similarity.score <= maxScore)
-    .sort((a, b) => b.matchedCount - a.matchedCount || a.similarity.score - b.similarity.score || a.name.localeCompare(b.name));
+  }).filter(product => (matchMode === "all" ? product.matchedCount === selections.length : product.matchedCount > 0) && (maxScore === null || product.similarity.score <= maxScore))
+    .sort((a, b) => b.matchedCount - a.matchedCount || a.name.localeCompare(b.name));
 }
 export function variantSortKey(variant) {
   const size = variant.title.match(/(\d+(?:\.\d+)?)\s*ml\b/i);

@@ -13,15 +13,13 @@ from decantified_scent_wizard import build_note_bank, fetch_products, parse_prod
 
 def export_catalog(raw_products: list[dict], output: Path) -> dict:
     products = [parse_product(raw) for raw in raw_products]
-    eligible = [
-        product for product in products
-        if product.gender in {"men", "unisex"} and product.available_variants
-    ]
+    eligible = [product for product in products if product.available_variants]
     bank = build_note_bank(products)
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "source": "https://decantified.com/products.json",
-        "eligibility": "In-stock products explicitly described as masculine or unisex",
+        "eligibility": "Every product with at least one currently available variant",
+        "inventory": {"total_products": len(products), "in_stock_products": len(eligible)},
         "note_bank": {
             layer: [{"term": term, "count": count} for term, count in entries]
             for layer, entries in bank.items()

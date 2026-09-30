@@ -4,12 +4,11 @@ A modern, zero-backend fragrance discovery experience that translates the comple
 
 ## Product shape
 
-- Search the live-exported, in-stock masculine and unisex catalog by note or note layer.
-- Choose any/all matching and a maximum Versace Man Eau Fraiche similarity.
-- Run independent search rounds and combine selections in one working scent edit.
+- Search every in-stock product by note or note layer.
+- Choose broad “any note” matching or precise “every note” matching.
 - Apply one batch size with smallest-available fallbacks, then adjust individual sizes.
 - Apply term or exact-note exclusions and a per-item price ceiling.
-- Open one prefilled Decantified cart or download the complete review as CSV.
+- Build one persistent Sample Cart, open it prefilled at Decantified, or download it as CSV.
 - Browse freely by mood, name, inspiration, and note, with “Surprise me” discovery.
 
 The site is intentionally static: HTML, CSS, JavaScript, and a checked-in JSON catalog. There are no runtime services, accounts, paid APIs, or framework dependencies.
@@ -47,7 +46,7 @@ See [ADR-001](docs/adr/001-static-github-pages.md). Core boundaries:
 
 - `index.html`: accessible page structure and content
 - `styles.css`: responsive visual system
-- `finder-core.js`: testable matching, similarity, exclusion, variant, and cart rules
+- `finder-core.js`: testable matching, exclusion, variant, and cart rules
 - `app.js`: interaction, persistence, rendering, CSV export, and browser orchestration
 - `web_catalog.json`: replaceable full-catalog snapshot
 - `scripts/build_web_catalog.py`: reproducible catalog exporter
