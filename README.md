@@ -1,6 +1,8 @@
-# Decantified Scent Finder
+# Scent Compass
 
-A modern, zero-backend fragrance discovery experience that translates the complete command-line scent wizard into a shareable browser product.
+A modern, zero-backend fragrance discovery experience built as an independent community passion project.
+
+Scent Compass is not affiliated with, endorsed by, sponsored by, or operated by Decantified. Public product information is used to help fragrance fans explore and build sample carts; purchasing happens on the retailer's website.
 
 ## Product shape
 
