@@ -5,7 +5,8 @@ An independent, retailer-neutral fragrance sample finder. All searchable retaile
 ## Experience
 
 - Search decants by name, brand, inspiration, or notes; use any/all note matching and exclusions.
-- Compare confidently identified fragrances across retailers; ambiguous names and concentrations remain separate.
+- Browse one card per normalized brand and exact fragrance name. Different flankers and brands stay separate; concentrations remain distinct identities within the card.
+- Compare retailer prices in a size grid with concentration, volume, and currency filters. Currency tables remain separate; price sorting requires a verified concentration and exact size. Unknown concentrations are labeled and never treated as verified cart replacements.
 - Browse available samples by default, or include sold-out, unverified, backorder, and discontinued listings.
 - Choose sizes and retailers explicitly. Keep saved samples through stock and price changes.
 - Review separate retailer/currency subtotals, set per-currency budgets, and export CSV.

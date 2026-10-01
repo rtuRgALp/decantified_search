@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import fs from 'node:fs';
-import {groupFragrances,searchFragrances,buildNoteBank,stockState,chooseVariant,selectionSnapshot,reconcileCart,alternativesFor,migrateCart,checkoutUrl,cartCsv,sortOffers,safeRetailerUrl,newlyListed} from '../catalog-core.js';
+import {groupFragrances,searchFragrances,buildNoteBank,stockState,chooseVariant,selectionSnapshot,reconcileCart,alternativesFor,migrateCart,checkoutUrl,cartCsv,sortOffers,safeRetailerUrl,newlyListed,priceGrid} from '../catalog-core.js';
 const now=Date.parse('2026-09-30T12:00:00Z');
 const retailers=new Map([['a',{id:'a',name:'Alpha',origin:'https://a.example',approved_origins:['https://a.example'],adapter:'shopify',checkout_verified_at:'2026-09-30'}],['b',{id:'b',name:'Beta',origin:'https://b.example',approved_origins:['https://b.example'],adapter:'shopify',checkout_verified_at:null}],['decantified',{id:'decantified',name:'Decantified',origin:'https://decantified.com',approved_origins:['https://decantified.com'],adapter:'shopify'}]]);
 function offer(id='a',stock='in_stock',currency='USD',size=2){return {id:id+':1',retailer_id:id,fragrance_id:'fragrance:verified',fragrance:{name:'Smoke',brand:'House',concentration:'EDP'},name:'Smoke EDP',url:retailers.get(id).origin+'/products/smoke',top:'Bergamot',heart:'',base:'Vanilla',unlayered:'Honey',observed_at:new Date(now).toISOString(),first_seen_at:new Date(now).toISOString(),initial_import:true,variants:[{id:id+':11',source_id:'11',title:size+'ml',size_ml:size,currency,price_minor:250,stock,observed_at:new Date(now).toISOString()}]};}
@@ -17,15 +17,36 @@ test('legacy migration uses variant IDs and preserves price ceiling',()=>{const 
 test('checkout only verified retailer, ready original variant IDs, safe origins',()=>{const a=offer(),b=offer('b');const items=[a,b].map(o=>({...selectionSnapshot(o,o.variants[0],retailers.get(o.retailer_id)),offer:o,variant:o.variants[0],ready:true,reasons:[],retailer:retailers.get(o.retailer_id),status:'in_stock'}));assert.match(checkoutUrl(items,retailers.get('a')),/a\.example\/cart\/11:1/);assert.equal(checkoutUrl(items,retailers.get('b')),'');assert.equal(safeRetailerUrl('javascript:alert(1)',retailers.get('a')),'');assert.equal(safeRetailerUrl('https://evil.example',retailers.get('a')),'');assert.match(cartCsv(items,retailers),/last_checked/);assert.match(cartCsv(items,retailers),/"Beta"/);});
 test('newly listed badge does not label baseline import',()=>{const a=offer();assert.equal(newlyListed(a,now),false);a.initial_import=false;assert.equal(newlyListed(a,now),true);assert.equal(newlyListed(a,now+31*86400e3),false);});
 
-test('matching names surface other retailers without merging unverified concentrations',()=>{
+test('name families roll up retailers while retaining separate verified identities',()=>{
  const a=offer(),b=offer('b');b.fragrance_id='listing:b:1';b.fragrance.concentration=null;
  const groups=groupFragrances([a,b],retailers,selected,false,now);
- assert.equal(groups.length,2);assert.equal(groups[0].offers.length,1);
- assert.equal(groups.find(g=>g.id===a.fragrance_id).relatedOffers[0].id,b.id);
- const result=searchFragrances(groups,[{term:'bergamot',layer:'top'}]);
- assert.equal(result.find(g=>g.id===a.fragrance_id).relatedOffers.length,1);
+ assert.equal(groups.length,1);assert.equal(groups[0].offers.length,2);assert.equal(groups[0].identityGroups.length,2);
+ assert.equal(groups[0].unverifiedCount,1);assert.equal(groups[0].retailerCount,2);
+ const result=searchFragrances(groups,[{term:'bergamot',layer:'top'}]);assert.equal(result.length,1);
  assert.equal(alternativesFor({offer:a},new Map([[b.id,b]]),retailers,now).length,0);
- b.fragrance.concentration='Parfum';assert.equal(groupFragrances([a,b],retailers,selected,false,now)[0].relatedOffers.length,0);
- b.fragrance.concentration=null;b.fragrance.brand='Another House';assert.equal(groupFragrances([a,b],retailers,selected,false,now)[0].relatedOffers.length,0);
- b.fragrance.brand='House';assert.equal(groupFragrances([a,b],retailers,new Set(['a']),false,now)[0].relatedOffers.length,0);
+ b.fragrance.concentration='Parfum';const family=groupFragrances([a,b],retailers,selected,false,now)[0];
+ assert.deepEqual(family.concentrations,['EDP','Parfum']);assert.equal(family.identityGroups.length,2);
+ b.fragrance.brand='Another House';assert.equal(groupFragrances([a,b],retailers,selected,false,now).length,2);
+ b.fragrance.brand='House';b.fragrance.name='Smoke Intense';assert.equal(groupFragrances([a,b],retailers,selected,false,now).length,2);
+ b.fragrance.name='Smoke';assert.equal(groupFragrances([a,b],retailers,new Set(['a']),false,now)[0].offers.length,1);
+ assert.equal(groupFragrances([a,b],retailers,new Set(['a']),false,now)[0].id,groups[0].id);
+ b.fragrance.conflict=true;assert.equal(groupFragrances([a,b],retailers,selected,false,now).length,2);
+});
+test('pricing grid keeps exact volumes, currencies, concentrations and stock separate',()=>{
+ const a=offer(),b=offer('b','in_stock','EUR',5);
+ a.variants.push({...a.variants[0],id:'a:12',source_id:'12',size_ml:5,price_minor:100,stock:'out_of_stock'});
+ let panels=priceGrid([b,a],retailers,{},now);assert.deepEqual(panels.map(p=>p.currency),['EUR','USD']);
+ assert.deepEqual(panels[1].sizes,[2,5]);assert.equal(panels[1].rows[0].variants[1].effectiveStock,'out_of_stock');
+ panels=priceGrid([b,a],retailers,{sizeMl:2},now);assert.equal(panels.length,2);assert.deepEqual(panels[0].sizes,[2]);assert.equal(panels[0].rows[0].variants.length,0);
+ b.variants[0].currency='USD';b.variants[0].size_ml=2;b.variants[0].price_minor=200;
+ assert.equal(priceGrid([b,a],retailers,{sizeMl:2,concentration:'EDP',order:'price'},now)[0].rows[0].offer.id,b.id);
+ assert.equal(priceGrid([b,a],retailers,{sizeMl:2,order:'price'},now)[0].rows[0].offer.id,a.id);
+ b.fragrance.concentration='Parfum';assert.equal(priceGrid([b,a],retailers,{concentration:'EDP'},now)[0].rows.length,1);
+ b.fragrance.concentration=null;assert.equal(priceGrid([b,a],retailers,{concentration:'unknown'},now)[0].rows[0].offer.id,b.id);
+});
+
+test('all-note matching never combines different concentration identities',()=>{
+ const a=offer(),b=offer('b');a.top='Bergamot';a.base='';a.unlayered='';b.top='Lemon';b.base='';b.unlayered='';b.fragrance.concentration='Parfum';b.fragrance_id='fragrance:parfum';
+ const family=groupFragrances([a,b],retailers,selected,false,now);
+ assert.equal(searchFragrances(family,[{term:'bergamot',layer:'top'},{term:'lemon',layer:'top'}],'all').length,0);
 });

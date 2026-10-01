@@ -1,5 +1,5 @@
 import { resolveBankQuery, splitNoteTerms } from './finder-core.js';
-import { STORAGE_KEY, OVERDUE_MS, STALE_MS, groupFragrances, searchFragrances, buildNoteBank, availableVariants, stockState, chooseVariant, selectionSnapshot, reconcileCart, alternativesFor, checkoutUrl, migrateCart, formatMoney, cartCsv, safeRetailerUrl, sortOffers, newlyListed } from './catalog-core.js';
+import { STORAGE_KEY, OVERDUE_MS, STALE_MS, groupFragrances, searchFragrances, buildNoteBank, availableVariants, stockState, chooseVariant, selectionSnapshot, reconcileCart, alternativesFor, checkoutUrl, migrateCart, formatMoney, cartCsv, safeRetailerUrl, sortOffers, newlyListed, priceGrid } from './catalog-core.js';
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=value=>String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -66,7 +66,7 @@ function mood(group){const text=searchable(group);return Object.entries(moods).m
 function visual(group){return `<span class="mini-bottle"><span>${esc(group.name)}</span></span>`;}
 function card(group){
   const notes=[...new Set(group.offers.flatMap(o=>[o.top,o.heart,o.base,o.unlayered].flatMap(splitNoteTerms)))],ready=group.offers.filter(o=>availableVariants(o).length).length,fresh=group.offers.some(o=>newlyListed(o));
-  return `<article class="product-card"><button class="card-visual visual-${mood(group)}" data-view="${esc(group.id)}" aria-label="Compare samples for ${esc(group.name)}"><span class="card-arrow">↗</span>${visual(group)}</button><div class="card-copy"><p class="card-kicker">${esc([group.brand,group.concentration].filter(Boolean).join(' · ')||'Retailer listing')}${fresh?' · Newly listed':''}</p><h3>${esc(group.name)}</h3><p class="card-notes">${esc(notes.slice(0,4).join(' · ')||'Notes not supplied')}</p><p class="card-meta">${ready} available retailer offer${ready===1?'':'s'} · ${group.offers.length} listed${group.relatedOffers?.length?' · '+group.relatedOffers.length+' additional matching listings; concentration needs review':''}</p><button class="mini-action" data-view="${esc(group.id)}">Compare samples and choose retailer →</button></div></article>`;
+  return `<article class="product-card"><button class="card-visual visual-${mood(group)}" data-view="${esc(group.id)}" aria-label="Compare samples for ${esc(group.name)}"><span class="card-arrow">↗</span>${visual(group)}</button><div class="card-copy"><p class="card-kicker">${esc([group.brand,(group.concentrations||[group.concentration]).filter(Boolean).join(' / ')].filter(Boolean).join(' · ')||'Retailer listing')}${fresh?' · Newly listed':''}</p><h3>${esc(group.name)}</h3><p class="card-notes">${esc(notes.slice(0,4).join(' · ')||'Notes not supplied')}</p><p class="card-meta">${group.retailerCount||new Set(group.offers.map(o=>o.retailer_id)).size} retailers · ${ready} available offers${group.unverifiedCount?' · '+group.unverifiedCount+' need concentration review':''}</p><button class="mini-action" data-view="${esc(group.id)}">Compare samples and choose retailer →</button></div></article>`;
 }
 function browseFiltered(){const words=state.query.trim().toLowerCase().split(/\s+/).filter(Boolean);return state.groups.filter(g=>(state.mood==='all'||moods[state.mood].some(t=>searchable(g).includes(t)))&&words.every(w=>searchable(g).includes(w)));}
 function renderBrowse(){
@@ -96,11 +96,30 @@ function offerRows(group,comparison=null){
     return `<article class="offer-row"><h3>${esc(r.name)}</h3><p class="offer-listing">${esc(o.name)}</p><p class="freshness">${esc(o.fragrance.concentration||'Concentration unverified')}</p><p class="freshness">Last checked ${esc(checkedAt(o.observed_at))}${newlyListed(o)?' · Newly listed':''}</p><div class="offer-notes">${provenance||'<span>Notes not supplied</span>'}</div><small>Note evidence: ${esc(r.name)} listing</small><div class="variant-list">${o.variants.map(v=>`<span class="variant-pill ${stockState(o,v)==='in_stock'?'':'unavailable'}">${esc(v.title)} · ${esc(formatMoney(v))} · ${stockLabels[stockState(o,v)]}</span>`).join('')}</div>${ready.length?`<label>Sample size<select data-offer-size="${esc(o.id)}">${ready.map(v=>`<option value="${esc(v.id)}" ${v.size_ml===chosen?'selected':''}>${esc(v.title)} · ${esc(formatMoney(v))}</option>`).join('')}</select></label><button class="button secondary compact" data-add="${esc(o.id)}">${state.replaceOfferId?'Replace selection with':'Add sample from'} ${esc(r.name)}</button>`:''}<a class="text-button" href="${esc(safeRetailerUrl(o.url,r))}" target="_blank" rel="noopener">View product ↗</a></article>`;
   }).join('');
 }
+function renderPriceGrid(){
+  const group=state.dialogGroup;
+  const size=$('#compareVolume').value,strength=$('#compareStrength').value;
+  const canSort=size!==''&&strength!=='all'&&strength!=='unknown';
+  $('#compareOrder').disabled=!canSort;if(!canSort)$('#compareOrder').value='retailer';
+  const panels=priceGrid(group.offers,state.retailers,{sizeMl:size?Number(size):null,concentration:strength,currency:$('#compareCurrency').value,order:$('#compareOrder').value});
+  $('#priceGrid').innerHTML=panels.map(panel=>`<section class="currency-grid"><h3>${esc(panel.currency)} prices</h3><div class="price-table-scroll" tabindex="0" aria-label="${esc(panel.currency)} sample prices"><table><thead><tr><th scope="col">Retailer / concentration</th>${panel.sizes.map(size=>`<th scope="col">${size}ml</th>`).join('')}</tr></thead><tbody>${panel.rows.map(row=>{
+    const retailer=state.retailers.get(row.offer.retailer_id);
+    return `<tr><th scope="row"><strong>${esc(retailer.name)}</strong><span>${esc(row.strength==='unknown'?'Unverified':row.strength)}</span><small>Checked ${esc(checkedAt(row.offer.observed_at))}</small><a href="${esc(safeRetailerUrl(row.offer.url,retailer))}" target="_blank" rel="noopener">View product ↗</a></th>${panel.sizes.map(size=>{
+      const variants=row.variants.filter(v=>v.size_ml===size);
+      return `<td>${variants.length?variants.map(v=>`<div class="price-cell"><span>${esc(formatMoney(v))}</span><small>${esc(v.title)} · ${stockLabels[v.effectiveStock]}</small>${v.effectiveStock==='in_stock'?`<button type="button" class="text-button" data-grid-offer="${esc(row.offer.id)}" data-grid-variant="${esc(v.id)}" aria-label="${esc('Add '+retailer.name+' '+row.strength+' '+size+'ml '+formatMoney(v))}">${state.replaceOfferId?'Replace selection':'Add sample'}</button>`:''}</div>`).join(''):'<span class="missing-size">Not listed</span>'}</td>`;
+    }).join('')}</tr>`;
+  }).join('')}</tbody></table></div></section>`).join('')||'<p>No listings match this size, concentration, and currency.</p>';
+}
 function openProduct(id,allOffers=false){
   let group=state.groups.find(g=>g.id===id);if(allOffers){const offers=[...state.offers.values()].filter(o=>o.fragrance_id===id);if(offers.length)group={id,...offers[0].fragrance,offers};}if(!group)return;state.dialogGroup=group;
-  const comparisons=[...new Set(group.offers.flatMap(o=>availableVariants(o).map(v=>`${v.currency}|${v.size_ml}`)))].sort();
-  $('#dialogContent').innerHTML=`<div class="dialog-body"><p class="eyebrow">Choose your retailer</p><h2 id="dialogTitle">${esc(group.name)}</h2><p>${esc([group.brand,group.concentration].filter(Boolean).join(' · '))}</p><p>Retailers appear alphabetically. Price comparisons use the same volume and currency. Prices exclude shipping.</p><label>Offer ordering<select id="offerOrdering"><option value="">Retailer name (A–Z)</option>${comparisons.map(pair=>{const[currency,size]=pair.split('|');return `<option value="${pair}">${currency} · ${size}ml · lowest price first</option>`;}).join('')}</select></label><div id="offerRows">${offerRows(group)}</div>${!allOffers&&group.relatedOffers?.length?`<section class="related-offers"><h3>Other retailers with a matching name</h3><p>These listings match the brand and fragrance name. At least one listing omits concentration, so equivalence has not been verified. They are shown separately. Review the product before choosing a sample.</p>${offerRows({offers:group.relatedOffers})}</section>`:''}</div>`;$('#scentDialog').showModal();
+  const sizes=[...new Set(group.offers.flatMap(o=>o.variants.map(v=>v.size_ml)))].sort((a,b)=>a-b);
+  const defaultSize=sizes.includes(2)?2:sizes[0];
+  const strengths=[...new Set(group.offers.map(o=>o.fragrance.concentration||'unknown'))].sort(compareTextLocal);
+  const currencies=[...new Set(group.offers.flatMap(o=>o.variants.map(v=>v.currency)))].sort();
+  $('#dialogContent').innerHTML=`<div class="dialog-body"><p class="eyebrow">Compare retailer samples</p><h2 id="dialogTitle">${esc(group.name)}</h2><p>${esc(group.brand||'Retailer listing')} · ${new Set(group.offers.map(o=>o.retailer_id)).size} retailers</p><p>Compare sample prices by size and concentration. Unverified concentrations need review. Each currency is shown separately; prices exclude shipping.</p><div class="comparison-controls"><label>Sample volume<select id="compareVolume"><option value="">All sizes</option>${sizes.map(size=>`<option value="${size}" ${size===defaultSize?'selected':''}>${size}ml</option>`).join('')}</select></label><label>Concentration<select id="compareStrength"><option value="all">All strengths</option>${strengths.map(strength=>`<option value="${esc(strength)}">${strength==='unknown'?'Unverified':esc(strength)}</option>`).join('')}</select></label><label>Currency<select id="compareCurrency"><option value="all">All currencies</option>${currencies.map(currency=>`<option>${currency}</option>`).join('')}</select></label><label>Ordering<select id="compareOrder"><option value="retailer">Retailer A–Z</option><option value="price">Lowest price</option></select></label></div><p class="freshness">Price sorting requires one verified concentration and an exact sample volume.</p><div id="priceGrid"></div><details class="listing-details"><summary>Listing details and note sources</summary><div>${offerRows(group)}</div></details></div>`;
+  renderPriceGrid();$('#scentDialog').showModal();
 }
+function compareTextLocal(a,b){return String(a).localeCompare(String(b));}
 function addOffer(offerId,variantId=null,requestedSize=null){
   const offer=state.offers.get(offerId);if(!offer)return;const choice=variantId?{variant:availableVariants(offer).find(v=>v.id===variantId),fallback:false}:chooseVariant(offer,requestedSize);if(!choice.variant)return showToast('This sample is no longer verified available.');
   const item=selectionSnapshot(offer,choice.variant,state.retailers.get(offer.retailer_id)),index=state.cart.findIndex(i=>i.offerId===offerId);
@@ -130,6 +149,7 @@ function applyBudget(){const value=$('#maxPrice').value,currency=$('#budgetCurre
 document.addEventListener('click',event=>{
   const closest=s=>event.target.closest(s);
   if(closest('[data-view]')){state.replaceOfferId=null;openProduct(closest('[data-view]').dataset.view);}
+  if(closest('[data-grid-offer]')){const cell=closest('[data-grid-offer]');addOffer(cell.dataset.gridOffer,cell.dataset.gridVariant);}
   if(closest('[data-add]')){const id=closest('[data-add]').dataset.add;addOffer(id,$(`[data-offer-size="${CSS.escape(id)}"]`)?.value);}
   if(closest('[data-popular]'))addSelection(closest('[data-popular]').dataset.popular);
   if(closest('[data-remove-note]')){state.selections.splice(Number(closest('[data-remove-note]').dataset.removeNote),1);renderSelections();}
@@ -140,7 +160,7 @@ document.addEventListener('click',event=>{
 document.addEventListener('change',event=>{
   if(event.target.matches('[data-retailer]')){const id=event.target.dataset.retailer;event.target.checked?state.selected.add(id):state.selected.delete(id);state.visible=12;refreshViews();}
   if(event.target.id==='includeSoldOut'){state.visible=12;refreshViews();}
-  if(event.target.id==='offerOrdering'){const pair=event.target.value.split('|');$('#offerRows').innerHTML=offerRows(state.dialogGroup,event.target.value?{currency:pair[0],size_ml:Number(pair[1])}:null);}
+  if(['compareVolume','compareStrength','compareCurrency','compareOrder'].includes(event.target.id))renderPriceGrid();
   if(event.target.matches('[data-item-size]')){addOffer(event.target.dataset.itemSize,event.target.value);renderCart();}
 });
 $('#selectAllRetailers').addEventListener('click',()=>{state.selected=new Set([...state.offers.values()].map(o=>o.retailer_id));renderCoverage();refreshViews();});$('#selectNoRetailers').addEventListener('click',()=>{state.selected.clear();renderCoverage();refreshViews();});

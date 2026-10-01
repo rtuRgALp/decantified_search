@@ -35,23 +35,51 @@ export function sortOffers(offers, retailers, comparison = null) {
   });
 }
 export function groupFragrances(offers, retailers, selected, includeSoldOut = false, now = Date.now()) {
-  const groups = new Map(), byName = new Map();
-  const nameKey = fragrance => [fragrance.brand,fragrance.name].map(value=>String(value||'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim()).join('|');
+  // Presentation families collect matching names; underlying verified identities stay intact.
+  const families = new Map();
+  const normalize = value => String(value||'').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
   for (const offer of offers) {
     if (!selected.has(offer.retailer_id) || (!includeSoldOut && !availableVariants(offer,now).length)) continue;
-    if(offer.fragrance.brand){const key=nameKey(offer.fragrance);if(!byName.has(key))byName.set(key,[]);byName.get(key).push(offer);}
-    const id = offer.fragrance_id;
-    if (!groups.has(id)) groups.set(id, {id, name: offer.fragrance.name, brand: offer.fragrance.brand, concentration: offer.fragrance.concentration, offers: []});
-    groups.get(id).offers.push(offer);
+    const f=offer.fragrance;
+    const id=f.brand && !f.conflict ? 'family:'+normalize(f.brand)+'|'+normalize(f.name) : offer.fragrance_id;
+    if(!families.has(id))families.set(id,{id,name:f.name,brand:f.brand,offers:[],identityGroups:[]});
+    families.get(id).offers.push(offer);
   }
-  return [...groups.values()].map(group => ({...group, offers: sortOffers(group.offers,retailers), relatedOffers: sortOffers((byName.get(nameKey(group))||[]).filter(o=>o.fragrance_id!==group.id && (!group.concentration || !o.fragrance.concentration)),retailers)})).sort((a,b) => compareText(a.name,b.name) || compareText(a.id,b.id));
+  return [...families.values()].map(family=>{
+    const identities=new Map();
+    for(const offer of family.offers){if(!identities.has(offer.fragrance_id))identities.set(offer.fragrance_id,{id:offer.fragrance_id,concentration:offer.fragrance.concentration,offers:[]});identities.get(offer.fragrance_id).offers.push(offer);}
+    const strengths=[...new Set(family.offers.map(o=>o.fragrance.concentration).filter(Boolean))].sort(compareText);
+    const unverifiedCount=family.offers.filter(o=>!o.fragrance.concentration||o.fragrance.conflict).length;
+    return {...family,offers:sortOffers(family.offers,retailers),identityGroups:[...identities.values()],concentrations:strengths,concentration:strengths.length===1&&!unverifiedCount?strengths[0]:null,unverifiedCount,retailerCount:new Set(family.offers.map(o=>o.retailer_id)).size};
+  }).sort((a,b)=>compareText(a.name,b.name)||compareText(a.id,b.id));
+}
+export function priceGrid(offers, retailers, {sizeMl=null,concentration='all',currency='all',order='retailer'}={}, now=Date.now()) {
+  const panels=new Map();
+  for(const offer of sortOffers(offers,retailers)){
+    const strength=offer.fragrance.concentration||'unknown';
+    if(concentration!=='all'&&strength!==concentration)continue;
+    const variants=offer.variants.filter(v=>currency==='all'||v.currency===currency);
+    for(const code of new Set(variants.map(v=>v.currency))){
+      if(!panels.has(code))panels.set(code,{currency:code,rows:[],sizes:[]});
+      panels.get(code).rows.push({offer,strength,variants:variants.filter(v=>v.currency===code&&(sizeMl===null||v.size_ml===Number(sizeMl))).map(v=>({...v,effectiveStock:stockState(offer,v,now)}))});
+    }
+  }
+  return [...panels.values()].sort((a,b)=>compareText(a.currency,b.currency)).map(panel=>{
+    const sizes=sizeMl!==null?[Number(sizeMl)]:[...new Set(panel.rows.flatMap(row=>row.variants.map(v=>v.size_ml)))].sort((a,b)=>a-b);
+    // Price order requires an explicitly selected, verified strength and exact volume.
+    if(order==='price'&&sizeMl!==null&&concentration!=='all'&&concentration!=='unknown'){
+      const price=row=>row.variants.filter(v=>v.effectiveStock==='in_stock').reduce((n,v)=>Math.min(n,v.price_minor),Infinity);
+      panel.rows.sort((a,b)=>price(a)-price(b)||compareText(retailers.get(a.offer.retailer_id)?.name,retailers.get(b.offer.retailer_id)?.name)||compareText(a.offer.id,b.offer.id));
+    }
+    return {...panel,sizes};
+  });
 }
 export function searchFragrances(groups, selections, mode='any') {
   if (!selections.length) return [];
   return groups.map(group => {
     const matches = selections.map(selection => ({...selection, evidence: group.offers.map(offer => ({offerId:offer.id, retailerId:offer.retailer_id, fields:selectionMatches(offer,selection)})).filter(e => e.fields.length)}));
     return {...group, matches, matchedCount:matches.filter(m => m.evidence.length).length};
-  }).filter(group => mode === 'all' ? group.matchedCount === selections.length : group.matchedCount > 0)
+  }).filter(group => mode === 'all' ? (group.matchedCount === selections.length && (!group.identityGroups || group.identityGroups.some(identity=>selections.every(selection=>identity.offers.some(offer=>selectionMatches(offer,selection).length))))) : group.matchedCount > 0)
     .sort((a,b) => b.matchedCount - a.matchedCount || compareText(a.name,b.name) || compareText(a.id,b.id));
 }
 export function buildNoteBank(groups) {
