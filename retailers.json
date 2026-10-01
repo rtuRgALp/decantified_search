@@ -18,7 +18,12 @@
       "checkout_verified_at": null,
       "decant_rule": {
         "max_ml": 20,
-        "requires_sample_evidence": true
+        "requires_sample_evidence": true,
+        "reviewed_catalog": {
+          "collection": "fragrance-samples",
+          "evidence_url": "https://bizescents.com/collections/fragrance-samples",
+          "reviewed_at": "2026-10-01"
+        }
       }
     },
     {
@@ -98,7 +103,19 @@
       "checkout_verified_at": null,
       "decant_rule": {
         "max_ml": 20,
-        "requires_sample_evidence": true
+        "requires_sample_evidence": true,
+        "reviewed_catalog": {
+          "evidence_url": "https://decantalize.com/",
+          "declaration_pattern": "rebottling genuine fragrances",
+          "sizes_ml": [
+            1,
+            2,
+            3,
+            5,
+            10
+          ],
+          "reviewed_at": "2026-10-01"
+        }
       }
     },
     {
@@ -179,7 +196,19 @@
       "checkout_verified_at": null,
       "decant_rule": {
         "max_ml": 20,
-        "requires_sample_evidence": true
+        "requires_sample_evidence": true,
+        "reviewed_catalog": {
+          "evidence_url": "https://decantoperfumes.com/pages/que-hacemos",
+          "declaration_pattern": "tienda en linea de Decants",
+          "sizes_ml": [
+            1,
+            2,
+            3,
+            5,
+            10
+          ],
+          "reviewed_at": "2026-10-01"
+        }
       }
     },
     {
@@ -199,7 +228,16 @@
       "checkout_verified_at": null,
       "decant_rule": {
         "max_ml": 20,
-        "requires_sample_evidence": true
+        "requires_sample_evidence": true,
+        "reviewed_catalog": {
+          "evidence_url": "https://discoverydecants.com/",
+          "declaration_pattern": "DECANT SIZES",
+          "sizes_ml": [
+            2,
+            5
+          ],
+          "reviewed_at": "2026-10-01"
+        }
       }
     },
     {
@@ -422,7 +460,17 @@
       "checkout_verified_at": null,
       "decant_rule": {
         "max_ml": 20,
-        "requires_sample_evidence": true
+        "requires_sample_evidence": true,
+        "reviewed_catalog": {
+          "evidence_url": "https://parfumsamples.be/",
+          "declaration_pattern": "Parfum Staaltjes",
+          "sizes_ml": [
+            2,
+            5,
+            10
+          ],
+          "reviewed_at": "2026-10-01"
+        }
       }
     },
     {

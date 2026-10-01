@@ -33,6 +33,28 @@ class CatalogTests(unittest.TestCase):
         generic=raw();generic['title']='Sample 5 ml';generic['variants']=[{'id':1,'title':'5ml','price':'1.00','available':True}]
         self.assertIsNone(normalize_product(generic,R,NOW))
 
+    def test_reviewed_sample_evidence_and_localized_labels(self):
+        item=raw();item['title']='Example EDP';item['body_html']='';item['variants']=[{'id':1,'title':'2ml','price':'1.00','available':True}]
+        self.assertIsNone(normalize_product(item,R,NOW))
+        reviewed={**R,'decant_rule':{'max_ml':20,'reviewed_catalog':{'sizes_ml':[2,5]}}}
+        item['verified_sample_catalog']='https://example.com/verified-samples'
+        self.assertEqual(normalize_product(item,reviewed,NOW)['variants'][0]['size_ml'],2)
+        item['variants'][0]['title']='10ml'
+        self.assertIsNone(normalize_product(item,reviewed,NOW))
+        item['variants'][0]['title']='2ml';item['title']='Example EDP (FULL BOTTLE)'
+        self.assertIsNone(normalize_product(item,reviewed,NOW))
+        item.pop('verified_sample_catalog');item['title']='Example EDP';item['body_html']='Parfum staaltjes'
+        self.assertIsNotNone(normalize_product(item,R,NOW))
+
+    def test_incomplete_present_listing_retained_as_unknown(self):
+        old=merge_snapshot(R,[normalize_product(raw(),R,NOW)],None,NOW)
+        current=merge_snapshot(R,[],old,NOW,uncertain_ids={'1'})
+        self.assertEqual(current['products'][0]['listing_state'],'listed')
+        self.assertEqual(current['products'][0]['variants'][0]['stock'],'unknown')
+        empty=merge_snapshot(R,[],None,NOW)
+        first=merge_snapshot(R,[normalize_product(raw(),R,NOW)],empty,NOW)
+        self.assertTrue(first['products'][0]['initial_import'])
+
     def test_variant_stock_prices_and_missing_notes(self):
         item=raw(available=False);item['body_html']='Sample decant';item['variants'].append({'id':12,'title':'2ml','price':'4.70','available':True})
         product=normalize_product(item,R,NOW)
@@ -57,6 +79,8 @@ class CatalogTests(unittest.TestCase):
             self.assertNotEqual(edp['fragrance_id'],normalize_product(other,R,NOW)['fragrance_id'])
         incomplete=raw();incomplete['title']='Night Smoke – Sample';incomplete['vendor']='Inspiration: Example'
         self.assertTrue(normalize_product(incomplete,R,NOW)['fragrance_id'].startswith('listing:'))
+        self.assertEqual(identity('Coach Parfum (women)','Coach',R)['name'],'Coach (women)')
+        self.assertEqual(identity('(RARE FIND) Khamrah EDP by Lattafa','',R)['name'],'Khamrah')
 
     def test_history_new_restocks_removed_and_collapse(self):
         a=normalize_product(raw(1,False),R,NOW);b=normalize_product(raw(2),R,NOW)

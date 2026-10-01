@@ -18,7 +18,7 @@ from decantified_scent_wizard import html_to_text, extract_notes, extract_inspir
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = 2
-SAMPLE = re.compile(r"\b(?:samples?|decants?|decanted|atomizers?|spray vial|travel spray|spray sample)\b", re.I)
+SAMPLE = re.compile(r"\b(?:samples?|decants?|décants?|decanted|staaltjes?|muestras?|amostras?|campioni|campione|échantillons?|atomizers?|spray vial|travel spray|spray sample)\b", re.I)
 NON_FRAGRANCE = re.compile(r"\b(?:gift card|empty (?:bottle|vial)|accessories|discovery set|sample set|bundle|subscription)\b", re.I)
 CONCENTRATION = re.compile(r"\b(extrait(?: de parfum)?|eau de parfum|eau de toilette|eau de cologne|EDP|EDT|EDC|parfum)\b", re.I)
 BRAND_ALIASES = {"paris corner": "Paris Corner", "riiffs": "RiiFFS", "maison alhambra": "Maison Alhambra"}
@@ -101,10 +101,11 @@ def verify_shopify_currency(retailer):
         raise ValueError(f"Storefront currency changed ({match[1]}); configuration review required")
 
 
-def fetch_shopify(retailer, get=request_json):
+def fetch_shopify(retailer, get=request_json, collection=None):
     products, seen = [], set()
     for page in range(1, 1001):
-        data, _ = get(f"{retailer['origin']}/products.json?page={page}&limit=250", retailer)
+        prefix = f"/collections/{collection}" if collection else ""
+        data, _ = get(f"{retailer['origin']}{prefix}/products.json?page={page}&limit=250", retailer)
         batch = data.get("products") if isinstance(data, dict) else None
         if not isinstance(batch, list):
             raise ValueError("Invalid Shopify page")
@@ -182,6 +183,8 @@ def minor_price(value, already_minor=False):
 
 def identity(name, brand, retailer):
     evidence = []
+    # Remove retailer merchandising badges, not meaningful fragrance flankers.
+    name = re.sub(r'^\s*\((?:rare find|rare gem|\d{4} release)\)\s*[–—-]?\s*', '', name, flags=re.I)
     title = re.sub(r"\s*[|–—-]?\s*(?:fragrance sample|sample sizes|sample decant|decant sample|sample/decant|sample|decant)(?:\s*[/|–—-]\s*(?:sample|decant))?\b.*$", "", name, flags=re.I).strip(" |–—-")
     title = re.sub(r"\([^)]*(?:sample|decant)[^)]*\)", "", title, flags=re.I).strip()
     # Product titles often explicitly state a brand more reliably than Shopify vendor.
@@ -205,7 +208,10 @@ def identity(name, brand, retailer):
         title = (title[:conc_match.start()] + title[conc_match.end():]).strip(" |–—-")
         evidence.append("concentration explicitly stated in listing title")
     if brand:
-        title = re.sub(r"^" + re.escape(brand) + r"\s+[–—-]?\s*", "", title, flags=re.I).strip()
+        without_brand = re.sub(r"^" + re.escape(brand) + r"\s+[–—-]?\s*", "", title, flags=re.I).strip()
+        # An eponymous perfume (e.g. Coach Parfum) still has a name after concentration removal.
+        if re.sub(r'\b(?:women|men|woman|man|unisex|for|pour)\b|[()\s]', '', without_brand, flags=re.I):
+            title = without_brand
     title = re.sub(r"\s+", " ", title).strip()
     return {"name": title or name, "brand": brand or None, "concentration": concentration, "evidence": evidence}
 
@@ -225,12 +231,14 @@ def normalize_product(raw, retailer, observed):
     if isinstance(tags, str):
         tags = tags.split(",")
     context = " ".join([name, description, str(raw.get('product_type', '')), *tags])
-    if NON_FRAGRANCE.search(name):
+    if NON_FRAGRANCE.search(name) or re.search(r"\b(?:full bottles?|retail bottles?|sealed bottles?)\b", name, re.I):
         return None
     if re.fullmatch(r'(?:samples?|decants?)\s*\d+(?:[.,]\d+)?\s*ml', name, re.I):
         # Generic configurable samples do not identify a fragrance to search or compare.
         return None
     explicit = bool(SAMPLE.search(context))
+    reviewed = raw.get("verified_sample_catalog")
+    rule = retailer["decant_rule"].get("reviewed_catalog", {})
     variants = []
     records = (raw.get("detailed_variations") or ([raw] if raw.get("type") == "simple" else [])) if woo else raw.get("variants", [])
     for v in records:
@@ -240,7 +248,7 @@ def normalize_product(raw, retailer, observed):
         size = volume(label)
         if size is None and explicit:
             size = volume(name)
-        if not size or size > retailer["decant_rule"]["max_ml"] or not (explicit or SAMPLE.search(label)) or re.search(r'\b(?:full bottle|retail bottle|sealed bottle)\b', label, re.I):
+        if not size or size > retailer["decant_rule"]["max_ml"] or not (explicit or SAMPLE.search(label) or (reviewed and (not rule.get("sizes_ml") or size in rule["sizes_ml"]))) or re.search(r'\b(?:full bottle|retail bottle|sealed bottle)\b', label, re.I):
             continue
         prices = v.get("prices", {}) if woo else {}
         currency = prices.get("currency_code") if woo else retailer["currency"]
@@ -279,23 +287,28 @@ def normalize_product(raw, retailer, observed):
         fragrance_id = "fragrance:" + hashlib.sha256(key.encode()).hexdigest()[:24]
     else:
         fragrance_id = f"listing:{retailer['id']}:{source_id}"
-    return apply_reviewed_identity({"id": f"{retailer['id']}:{source_id}", "source_id": source_id, "retailer_id": retailer['id'], "name": name, "url": url, "fragrance_id": fragrance_id, "fragrance": fragrance, "inspired_by": extract_inspired_by(raw, description), "top": notes.get('top', ''), "heart": notes.get('heart', notes.get('middle', '')), "base": notes.get('base', ''), "unlayered": general[1].strip() if general else "", "note_evidence": {"url": url, "retailer_id": retailer['id']}, "decant_evidence": "Explicit sample/decant/vial wording in listing", "variants": sorted(variants, key=lambda v: (v['size_ml'], v['id'])), "observed_at": observed})
+    return apply_reviewed_identity({"id": f"{retailer['id']}:{source_id}", "source_id": source_id, "retailer_id": retailer['id'], "name": name, "url": url, "fragrance_id": fragrance_id, "fragrance": fragrance, "inspired_by": extract_inspired_by(raw, description), "top": notes.get('top', ''), "heart": notes.get('heart', notes.get('middle', '')), "base": notes.get('base', ''), "unlayered": general[1].strip() if general else "", "note_evidence": {"url": url, "retailer_id": retailer['id']}, "decant_evidence": f"Reviewed sample catalog: {reviewed}" if reviewed else "Explicit sample/decant/vial wording in listing", "variants": sorted(variants, key=lambda v: (v['size_ml'], v['id'])), "observed_at": observed})
 
 
-def merge_snapshot(retailer, products, previous=None, observed=None):
+def merge_snapshot(retailer, products, previous=None, observed=None, uncertain_ids=None):
+    uncertain_ids = set(uncertain_ids or [])
     observed = observed or now_iso()
     old = {p['id']: p for p in (previous or {}).get('products', [])}
     old_active = [p for p in old.values() if p.get('listing_state') != 'no_longer_listed']
-    if previous and (not products and old_active or len(products) < len(old_active) * .5):
+    retained_incomplete = sum(p["source_id"] in uncertain_ids for p in old_active)
+    if previous and (not products and not retained_incomplete and old_active or len(products) + retained_incomplete < len(old_active) * .5):
         raise ValueError("Catalog count collapse quarantined; retained last valid snapshot")
-    baseline = previous is None
+    baseline = not (previous or {}).get("products")
     merged = []
     for product in products:
         former = old.pop(product['id'], None)
         product = {**product, "listing_state": "listed", "first_seen_at": former.get('first_seen_at', observed) if former else observed, "initial_import": former.get('initial_import', False) if former else baseline}
         merged.append(product)
     for product in old.values():
-        merged.append({**product, "listing_state": "no_longer_listed", "variants": [{**v, "stock": "no_longer_listed"} for v in product['variants']]})
+        if product["source_id"] in uncertain_ids:
+            merged.append({**product, "listing_state": "listed", "variants": [{**v, "stock": "unknown"} for v in product["variants"]], "validation_notice": "Present source listing has incomplete metadata; previous selection retained for review."})
+        else:
+            merged.append({**product, "listing_state": "no_longer_listed", "variants": [{**v, "stock": "no_longer_listed"} for v in product['variants']]})
     return {"schema_version": SCHEMA, "retailer_id": retailer['id'], "generated_at": observed, "products": sorted(merged, key=lambda p: p['id'])}
 
 
@@ -317,8 +330,24 @@ def refresh_one(retailer, output):
         if retailer['adapter'] == 'shopify':
             verify_shopify_currency(retailer)
         raw = fetch_shopify(retailer) if retailer['adapter'] == 'shopify' else fetch_woocommerce(retailer)
-        products, exclusions = [], 0
+        reviewed = retailer['decant_rule'].get('reviewed_catalog')
+        verified_ids = set()
+        if reviewed:
+            if reviewed.get('collection'):
+                verified_ids = {str(p['id']) for p in fetch_shopify(retailer, collection=reviewed['collection'])}
+            else:
+                page, _ = request_json(reviewed['evidence_url'], retailer, decode_json=False)
+                if not re.search(reviewed['declaration_pattern'], html_to_text(page), re.I):
+                    raise ValueError('Reviewed sample catalog declaration changed; evidence review required')
+                verified_ids = {str(p['id']) for p in raw}
+        products, exclusions, uncertain_ids = [], 0, set()
         for record in raw:
+            if not html_to_text(record.get('name' if retailer['adapter'] == 'woocommerce' else 'title', '') or ''):
+                uncertain_ids.add(str(record['id']))
+                exclusions += 1
+                continue
+            if str(record['id']) in verified_ids:
+                record['verified_sample_catalog'] = reviewed['evidence_url']
             product = normalize_product(record, retailer, observed)
             if product:
                 products.append(product)
@@ -327,9 +356,9 @@ def refresh_one(retailer, output):
         variant_ids = [v['id'] for p in products for v in p['variants']]
         if len(variant_ids) != len(set(variant_ids)):
             raise ValueError('Variant IDs collide across product listings')
-        snapshot = merge_snapshot(retailer, products, previous, observed)
+        snapshot = merge_snapshot(retailer, products, previous, observed, uncertain_ids)
         atomic_json(path, snapshot)
-        report.update(status='searchable' if products else 'empty', reason=None if products else 'No verified sample/decant offers in the public catalog.', last_success_at=observed, catalog_path=f'catalogs/{retailer["id"]}.json', raw_count=len(raw), offer_count=len(products), excluded_count=exclusions)
+        report.update(status='searchable' if products else 'empty', reason=None if products else 'No verified sample/decant offers in the public catalog.', last_success_at=observed, catalog_path=f'catalogs/{retailer["id"]}.json', raw_count=len(raw), offer_count=len(products), excluded_count=exclusions, incomplete_record_count=len(uncertain_ids))
     except Exception as exc:
         report.update(status='retained' if previous else 'unavailable', reason=str(exc), offer_count=len([p for p in (previous or {}).get('products', []) if p.get('listing_state') != 'no_longer_listed']))
     print(f"{report['name']}: {report['status']} — {report.get('offer_count', 0)} offers {report.get('reason') or ''}", flush=True)
