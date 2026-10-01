@@ -1,65 +1,59 @@
 # Scent Compass
 
-A modern, zero-backend fragrance discovery experience built as an independent community passion project.
+An independent, retailer-neutral fragrance sample finder. All searchable retailers are selected by default; offers appear alphabetically. No retailer rankings, paid placement, accounts, runtime backend, or paid APIs.
 
-Scent Compass is not affiliated with, endorsed by, sponsored by, or operated by Decantified. Public product information is used to help fragrance fans explore and build sample carts; purchasing happens on the retailer's website.
+## Experience
 
-## Product shape
+- Search decants by name, brand, inspiration, or notes; use any/all note matching and exclusions.
+- Compare confidently identified fragrances across retailers; ambiguous names and concentrations remain separate.
+- Browse available samples by default, or include sold-out, unverified, backorder, and discontinued listings.
+- Choose sizes and retailers explicitly. Keep saved samples through stock and price changes.
+- Review separate retailer/currency subtotals, set per-currency budgets, and export CSV.
+- Use verified Shopify cart links or individual retailer product links. Always confirm stock, price, and shipping at the retailer.
 
-- Search every in-stock product by note or note layer.
-- Choose broad “any note” matching or precise “every note” matching.
-- Apply one batch size with smallest-available fallbacks, then adjust individual sizes.
-- Apply term or exact-note exclusions and a per-item price ceiling.
-- Build one persistent Sample Cart, open it prefilled at Decantified, or download it as CSV.
-- Browse freely by mood, name, inspiration, and note, with “Surprise me” discovery.
+## Freshness
 
-The site is intentionally static: HTML, CSS, JavaScript, and a checked-in JSON catalog. There are no runtime services, accounts, paid APIs, or framework dependencies.
+Actual public Shopify product catalogs and WooCommerce Store API catalogs are fetched outside the browser. The daily refresh runs at 09:17 UTC, with manual dispatch in GitHub Actions. New listings appear after the next successful refresh and Cloudflare deployment. Initial imports are not marked new; later listings show “Newly listed” for 30 days, not an asserted fragrance release date.
 
-## Preview locally
+Every retailer has its own snapshot and last-check time. Overdue checks are flagged after 36 hours. After 72 hours stock becomes unverified and is excluded from available-now search and prefilled checkout. Errors and incomplete pagination retain prior observations; they never imply sold out. Discontinued selections remain visible in saved samples.
 
-```bash
+The repository is public and uses standard Ubuntu runners, which GitHub documents as free for public repositories. The workflow refuses to run if the repository becomes private. No paid ingestion service, artifact upload, or cache is required. Scheduled runs can be delayed, and public retailer endpoints can rate-limit or require connection verification.
+
+## Local preview
+
+```sh
 python3 -m http.server 8000
 ```
 
-Open `http://localhost:8000`. Opening `index.html` directly will not load the JSON catalog because browsers restrict local file requests.
+Open http://localhost:8000. Opening the HTML directly cannot load catalogs.
 
-## Deploy with GitHub Pages
+## Refresh
 
-1. Push this folder to the repository's `main` branch.
-2. Open **Settings → Pages** in GitHub.
-3. Set **Build and deployment → Source** to **GitHub Actions**.
-4. The included workflow publishes the site on every push to `main`.
-
-GitHub shows the public URL in the workflow summary and Pages settings. Hosting and deployment use GitHub’s free static infrastructure.
-
-## Refresh the catalog
-
-The interface reads `web_catalog.json`. Refresh it from Decantified's public catalog with:
-
-```bash
-python3 -m scripts.build_web_catalog --output web_catalog.json
+```sh
+python3 -m scripts.refresh_catalogs
+python3 -m scripts.refresh_catalogs --retailer decantified
 ```
 
-The export records its timestamp, the full note bank, eligible products, current in-stock variants, prices, and Shopify variant IDs. Review and commit the generated snapshot to publish it.
+Review `catalogs/refresh-report.json`, then commit only validated snapshots. Empty catalogs and drops over 50% are quarantined. Audit a legitimate collapse manually before replacing its previous snapshot. `retailers.json` lists every domain from the original CSV, verified origins, currency evidence, adapter, fallback reason, and checkout verification. The ranking spreadsheet is reference material only; it never drives price, stock, shipping, or ranking behavior.
 
-## Architecture
+`fragrance-mappings.json` contains reviewed exact identity mappings and their evidence URLs. Mappings must match brand and exact fragrance name; they cannot override a conflicting concentration. No enrichment creates unsupported note layers.
 
-See [ADR-001](docs/adr/001-static-github-pages.md). Core boundaries:
+## Deployment
 
-- `index.html`: accessible page structure and content
-- `styles.css`: responsive visual system
-- `finder-core.js`: testable matching, exclusion, variant, and cart rules
-- `app.js`: interaction, persistence, rendering, CSV export, and browser orchestration
-- `web_catalog.json`: replaceable full-catalog snapshot
-- `scripts/build_web_catalog.py`: reproducible catalog exporter
-- `.github/workflows/pages.yml`: free GitHub Pages deployment
-- `decantified_scent_wizard.py`: existing catalog/search domain tooling
+Pushing `main` publishes through Cloudflare Pages at https://scent-compass.pages.dev. Follow AGENTS.md: verify locally, commit task changes, push normally, wait for deployment, and smoke-test affected journeys. The existing GitHub Pages workflow is a secondary publication destination; Cloudflare is primary. Automated refresh commits are normal pushes and never overwrite newer remote work.
 
-## Verify
+## Architecture and verification
 
-```bash
+- `scripts/refresh_catalogs.py`: public ingestion, normalization, history, validation, reports.
+- `catalog-core.js`: pure grouping, availability, neutral ordering, migration, budgets, reconciliation, safe links, and CSV.
+- `finder-core.js`: existing note matching and exclusions.
+- `app.js`, `index.html`, `styles.css`: accessible static browser experience.
+- `catalogs/`: versioned retailer snapshots and manifest.
+- `.github/workflows/catalog-refresh.yml`: daily/manual refresh.
+
+```sh
 python3 -m unittest discover -s tests -v
-/Users/luisvargas/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test tests/finder-core.test.mjs
+npm test
 ```
 
-Then preview the site and check search, mood filters, product dialogs, outbound links, keyboard navigation, and narrow-screen layout.
+Check search, offer ordering, retailer filters, stock states, saved-cart reload, exports, keyboard access, mobile layout, and retailer handoffs in a browser. See ADR-003 for the multi-retailer decision. Existing Decantified CLI tools and the legacy `web_catalog.json` exporter remain available for their original single-retailer workflow.

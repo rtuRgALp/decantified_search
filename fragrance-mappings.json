@@ -1,0 +1,8 @@
+{
+  "schema_version": 2,
+  "mappings": [
+    {"brand": "Lattafa", "name": "Khamrah", "concentration": "EDP", "evidence_url": "https://www.lattafa-usa.com/products/khamrah", "reviewed_at": "2026-09-30"},
+    {"brand": "Lattafa", "name": "Khamrah Qahwa", "concentration": "EDP", "evidence_url": "https://www.lattafa-usa.com/products/khamrah-qahwa", "reviewed_at": "2026-09-30"},
+    {"brand": "Lattafa", "name": "Khamrah Dukhan", "concentration": "EDP", "evidence_url": "https://www.lattafa-usa.com/products/khamrah-dukhan", "reviewed_at": "2026-09-30"}
+  ]
+}

@@ -1,0 +1,589 @@
+{
+  "schema_version": 2,
+  "retailers": [
+    {
+      "id": "bizescents",
+      "name": "Bize Scents",
+      "original_domain": "bizescents.com",
+      "origin": "https://bizescents.com",
+      "approved_origins": [
+        "https://bizescents.com",
+        "https://www.bizescents.com"
+      ],
+      "adapter": "shopify",
+      "currency": "EUR",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "colognedecanted",
+      "name": "Cologne Decanted",
+      "original_domain": "colognedecanted.ca",
+      "origin": "https://colognedecanted.ca",
+      "approved_origins": [
+        "https://colognedecanted.ca",
+        "https://www.colognedecanted.ca"
+      ],
+      "adapter": "shopify",
+      "currency": "CAD",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "decantanco",
+      "name": "Decant & Co",
+      "original_domain": "decantanco.com",
+      "origin": "https://decantanco.com",
+      "approved_origins": [
+        "https://decantanco.com",
+        "https://www.decantanco.com"
+      ],
+      "adapter": "shopify",
+      "currency": "GBP",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "decantboutique",
+      "name": "Decant Boutique",
+      "original_domain": "decantboutique.com",
+      "origin": "https://decantboutique.com",
+      "approved_origins": [
+        "https://decantboutique.com",
+        "https://www.decantboutique.com"
+      ],
+      "adapter": "none",
+      "currency": null,
+      "currency_evidence": null,
+      "audit_date": "2026-09-30",
+      "fallback_reason": "Catalog could not be verified after a redirect failure.",
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "decantalize",
+      "name": "Decantalize",
+      "original_domain": "decantalize.com",
+      "origin": "https://decantalize.com",
+      "approved_origins": [
+        "https://decantalize.com",
+        "https://www.decantalize.com"
+      ],
+      "adapter": "shopify",
+      "currency": "USD",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "decanthq",
+      "name": "DecantHQ",
+      "original_domain": "decanthq.com",
+      "origin": "https://decanthq.com",
+      "approved_origins": [
+        "https://decanthq.com",
+        "https://www.decanthq.com"
+      ],
+      "adapter": "none",
+      "currency": null,
+      "currency_evidence": null,
+      "audit_date": "2026-09-30",
+      "fallback_reason": "HTTPS certificate validation failed during audit.",
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "decantified",
+      "name": "Decantified",
+      "original_domain": "decantified.com",
+      "origin": "https://decantified.com",
+      "approved_origins": [
+        "https://decantified.com",
+        "https://www.decantified.com"
+      ],
+      "adapter": "shopify",
+      "currency": "USD",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": "2026-09-30",
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      },
+      "checkout_evidence": "Browser cart handoff verified Khamrah 1ml and quantity 1"
+    },
+    {
+      "id": "decantika",
+      "name": "Decantika",
+      "original_domain": "decantika.com",
+      "origin": "https://decantika.com",
+      "approved_origins": [
+        "https://decantika.com",
+        "https://www.decantika.com"
+      ],
+      "adapter": "none",
+      "currency": "USD",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": "Store is password-protected; public catalog unavailable.",
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "decantoperfumes",
+      "name": "Decanto Perfumes",
+      "original_domain": "decantoperfumes.com",
+      "origin": "https://decantoperfumes.com",
+      "approved_origins": [
+        "https://decantoperfumes.com",
+        "https://www.decantoperfumes.com"
+      ],
+      "adapter": "shopify",
+      "currency": "MXN",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "discoverydecants",
+      "name": "Discovery Decants",
+      "original_domain": "discoverydecants.com",
+      "origin": "https://discoverydecants.com",
+      "approved_origins": [
+        "https://discoverydecants.com",
+        "https://www.discoverydecants.com"
+      ],
+      "adapter": "shopify",
+      "currency": "USD",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "dubaicollection",
+      "name": "Dubai Collection",
+      "original_domain": "dubaicollection.eu",
+      "origin": "https://dubaicollection.eu",
+      "approved_origins": [
+        "https://dubaicollection.eu",
+        "https://www.dubaicollection.eu"
+      ],
+      "adapter": "woocommerce",
+      "currency": "EUR",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "dynastydecanter",
+      "name": "Dynasty Decants",
+      "original_domain": "dynastydecanter.com",
+      "origin": "https://www.dynastydecants.com",
+      "approved_origins": [
+        "https://www.dynastydecants.com",
+        "https://dynastydecanter.com",
+        "https://www.dynastydecanter.com"
+      ],
+      "adapter": "shopify",
+      "currency": "USD",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": "2026-09-30",
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      },
+      "checkout_evidence": "Browser cart handoff verified Khamrah 1ml and quantity 1"
+    },
+    {
+      "id": "fragrantika",
+      "name": "Fragrantika",
+      "original_domain": "fragrantika.net",
+      "origin": "https://fragrantika.net",
+      "approved_origins": [
+        "https://fragrantika.net",
+        "https://www.fragrantika.net"
+      ],
+      "adapter": "shopify",
+      "currency": "EUR",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "hiddensamples",
+      "name": "Hidden Samples",
+      "original_domain": "hiddensamples.com",
+      "origin": "https://hiddensamples.com",
+      "approved_origins": [
+        "https://hiddensamples.com",
+        "https://www.hiddensamples.com"
+      ],
+      "adapter": "shopify",
+      "currency": "EUR",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "hyggescent",
+      "name": "Hygge Scent",
+      "original_domain": "hyggescent.com",
+      "origin": "https://hyggescent.com",
+      "approved_origins": [
+        "https://hyggescent.com",
+        "https://www.hyggescent.com"
+      ],
+      "adapter": "shopify",
+      "currency": "USD",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "lovethatscent",
+      "name": "Love That Scent",
+      "original_domain": "lovethatscent.com.au",
+      "origin": "https://lovethatscent.com.au",
+      "approved_origins": [
+        "https://lovethatscent.com.au",
+        "https://www.lovethatscent.com.au"
+      ],
+      "adapter": "shopify",
+      "currency": "AUD",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "manodecants",
+      "name": "Mano Decants",
+      "original_domain": "manodecants.com",
+      "origin": "https://manodecants.com",
+      "approved_origins": [
+        "https://manodecants.com",
+        "https://www.manodecants.com"
+      ],
+      "adapter": "shopify",
+      "currency": "CAD",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "mistymountaindecants",
+      "name": "Misty Mountain Decant Co.",
+      "original_domain": "mistymountaindecants.com",
+      "origin": "https://mistymountaindecants.com",
+      "approved_origins": [
+        "https://mistymountaindecants.com",
+        "https://www.mistymountaindecants.com"
+      ],
+      "adapter": "shopify",
+      "currency": "USD",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": "2026-09-30",
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      },
+      "checkout_evidence": "Browser cart handoff verified Khamrah 1ml and quantity 1"
+    },
+    {
+      "id": "norcalscentsco",
+      "name": "NorCal Scents Co.",
+      "original_domain": "norcalscentsco.com",
+      "origin": "https://norcalscentsco.com",
+      "approved_origins": [
+        "https://norcalscentsco.com",
+        "https://www.norcalscentsco.com"
+      ],
+      "adapter": "shopify",
+      "currency": "USD",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "parfdek",
+      "name": "Parfdek",
+      "original_domain": "parfdek.hu",
+      "origin": "https://parfdek.hu",
+      "approved_origins": [
+        "https://parfdek.hu",
+        "https://www.parfdek.hu"
+      ],
+      "adapter": "none",
+      "currency": null,
+      "currency_evidence": null,
+      "audit_date": "2026-09-30",
+      "fallback_reason": "UNAS storefront; no verified public catalog adapter yet.",
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "parfumsamples",
+      "name": "Parfum Samples",
+      "original_domain": "parfumsamples.be",
+      "origin": "https://parfumsamples.be",
+      "approved_origins": [
+        "https://parfumsamples.be",
+        "https://www.parfumsamples.be"
+      ],
+      "adapter": "shopify",
+      "currency": "EUR",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "perfumepalace",
+      "name": "Perfume Palace",
+      "original_domain": "perfumepalace.in",
+      "origin": "https://perfumepalace.in",
+      "approved_origins": [
+        "https://perfumepalace.in",
+        "https://www.perfumepalace.in"
+      ],
+      "adapter": "shopify",
+      "currency": "INR",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "petitparfums",
+      "name": "Petit Parfums",
+      "original_domain": "petitparfums.ca",
+      "origin": "https://petitparfums.ca",
+      "approved_origins": [
+        "https://petitparfums.ca",
+        "https://www.petitparfums.ca"
+      ],
+      "adapter": "shopify",
+      "currency": "CAD",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "scentaari",
+      "name": "Scentaari",
+      "original_domain": "scentaari.com",
+      "origin": "https://scentaari.com",
+      "approved_origins": [
+        "https://scentaari.com",
+        "https://www.scentaari.com"
+      ],
+      "adapter": "shopify",
+      "currency": "USD",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "scentera",
+      "name": "Scentera",
+      "original_domain": "scentera.co.uk",
+      "origin": "https://scentera.co.uk",
+      "approved_origins": [
+        "https://scentera.co.uk",
+        "https://www.scentera.co.uk"
+      ],
+      "adapter": "shopify",
+      "currency": "GBP",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "scentswithsense",
+      "name": "Scents With Sense",
+      "original_domain": "scentswithsense.com",
+      "origin": "https://scentswithsense.com",
+      "approved_origins": [
+        "https://scentswithsense.com",
+        "https://www.scentswithsense.com"
+      ],
+      "adapter": "woocommerce",
+      "currency": "USD",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "scentsation",
+      "name": "Scentsation",
+      "original_domain": "scentsation.pt",
+      "origin": "https://scentsation.pt",
+      "approved_origins": [
+        "https://scentsation.pt",
+        "https://www.scentsation.pt"
+      ],
+      "adapter": "shopify",
+      "currency": "EUR",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "whiffculture",
+      "name": "Whiff Culture",
+      "original_domain": "whiffculture.com",
+      "origin": "https://whiffculture.com",
+      "approved_origins": [
+        "https://whiffculture.com",
+        "https://www.whiffculture.com"
+      ],
+      "adapter": "none",
+      "currency": null,
+      "currency_evidence": null,
+      "audit_date": "2026-09-30",
+      "fallback_reason": "Original domain returned 404 during audit.",
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    },
+    {
+      "id": "zaoud",
+      "name": "Zaoud",
+      "original_domain": "zaoud.it",
+      "origin": "https://zaoud.it",
+      "approved_origins": [
+        "https://zaoud.it",
+        "https://www.zaoud.it"
+      ],
+      "adapter": "shopify",
+      "currency": "EUR",
+      "currency_evidence": "Public storefront/API audit, 2026-09-30",
+      "audit_date": "2026-09-30",
+      "fallback_reason": null,
+      "checkout_verified_at": null,
+      "decant_rule": {
+        "max_ml": 20,
+        "requires_sample_evidence": true
+      }
+    }
+  ]
+}

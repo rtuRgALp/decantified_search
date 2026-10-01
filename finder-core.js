@@ -3,7 +3,7 @@ export const EAU_FRAICHE_REFERENCE = {
   heart: { cedar: ["cedar", "cedarwood"], tarragon: ["tarragon"], sage: ["sage"], pepper: ["pepper", "black pepper", "white pepper", "pink pepper"] },
   base: { musk: ["musk", "white musk"], amber: ["amber"], sycamore: ["sycamore", "sycamore wood"], saffron: ["saffron"] },
 };
-export const SEARCH_FIELDS = ["name", "inspired_by", "top", "heart", "base"];
+export const SEARCH_FIELDS = ["name", "inspired_by", "top", "heart", "base", "unlayered"];
 export const NOTE_LAYERS = ["top", "heart", "base"];
 
 export function normalizeTerm(value = "") {
@@ -69,7 +69,7 @@ export function productMatchesExclusion(product, term, exact = false) {
   const normalized = normalizeTerm(term);
   if (!normalized) return [];
   if (!exact) return SEARCH_FIELDS.filter(field => containsTerm(product[field] || "", normalized));
-  const fields = NOTE_LAYERS.filter(layer => splitNoteTerms(product[layer]).includes(normalized));
+  const fields = [...NOTE_LAYERS, "unlayered"].filter(layer => splitNoteTerms(product[layer] || "").includes(normalized));
   if (normalizeTerm(product.name) === normalized) fields.push("name");
   if (normalizeTerm(product.inspired_by) === normalized) fields.push("inspired_by");
   return fields;
