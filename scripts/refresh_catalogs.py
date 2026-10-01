@@ -185,6 +185,7 @@ def identity(name, brand, retailer):
     evidence = []
     # Remove retailer merchandising badges, not meaningful fragrance flankers.
     name = re.sub(r'^\s*\((?:rare find|rare gem|\d{4} release)\)\s*[–—-]?\s*', '', name, flags=re.I)
+    name = re.sub(r"\([^)]*(?:sample|decant)[^)]*\)", "", name, flags=re.I).strip()
     title = re.sub(r"\s*[|–—-]?\s*(?:fragrance sample|sample sizes|sample decant|decant sample|sample/decant|sample|decant)(?:\s*[/|–—-]\s*(?:sample|decant))?\b.*$", "", name, flags=re.I).strip(" |–—-")
     title = re.sub(r"\([^)]*(?:sample|decant)[^)]*\)", "", title, flags=re.I).strip()
     # Product titles often explicitly state a brand more reliably than Shopify vendor.
@@ -193,12 +194,15 @@ def identity(name, brand, retailer):
     if by:
         brand, title = by[1].strip(), title[:by.start()].strip()
         evidence.append("brand explicitly stated in listing title")
-    elif dash and not CONCENTRATION.fullmatch(dash[2].strip()):
+    elif dash and brand and normalize(dash[1]) == normalize(brand):
+        title = dash[2].strip()
+        evidence.append("brand field agrees with title prefix")
+    elif dash and not CONCENTRATION.fullmatch(dash[2].strip()) and (normalize(dash[2]) == normalize(brand) or retailer.get('title_brand_position') == 'after_separator'):
         brand, title = dash[2].strip(), dash[1].strip()
         evidence.append("brand explicitly stated after title separator")
     elif brand:
         evidence.append("retailer product brand field")
-    if brand and (normalize(brand) in {normalize(retailer['name']), normalize(retailer['id']), normalize(retailer['original_domain'])} or re.search(r"inspir|sample|decant", brand, re.I)):
+    if brand and (normalize(brand) in {normalize(retailer['name']), normalize(retailer['id']), normalize(retailer['original_domain']), 'my store'} or re.search(r"inspir|sample|decant", brand, re.I)):
         brand = ""
     brand = BRAND_ALIASES.get(normalize(brand), brand)
     conc_match = CONCENTRATION.search(title)
@@ -233,7 +237,7 @@ def normalize_product(raw, retailer, observed):
     context = " ".join([name, description, str(raw.get('product_type', '')), *tags])
     if NON_FRAGRANCE.search(name) or re.search(r"\b(?:full bottles?|retail bottles?|sealed bottles?)\b", name, re.I):
         return None
-    if re.fullmatch(r'(?:samples?|decants?)\s*\d+(?:[.,]\d+)?\s*ml', name, re.I):
+    if re.fullmatch(r'(?:(?:samples?|decants?)\s*)?\d+(?:[.,]\d+)?\s*ml(?:\s*[/|,]\s*\d+(?:[.,]\d+)?\s*ml)*', name, re.I):
         # Generic configurable samples do not identify a fragrance to search or compare.
         return None
     explicit = bool(SAMPLE.search(context))

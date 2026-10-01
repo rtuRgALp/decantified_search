@@ -79,6 +79,7 @@ class CatalogTests(unittest.TestCase):
             self.assertNotEqual(edp['fragrance_id'],normalize_product(other,R,NOW)['fragrance_id'])
         incomplete=raw();incomplete['title']='Night Smoke – Sample';incomplete['vendor']='Inspiration: Example'
         self.assertTrue(normalize_product(incomplete,R,NOW)['fragrance_id'].startswith('listing:'))
+        self.assertEqual(identity('Lattafa - Khamrah (sample sizes)','Lattafa',R)['name'],'Khamrah')
         self.assertEqual(identity('Coach Parfum (women)','Coach',R)['name'],'Coach (women)')
         self.assertEqual(identity('(RARE FIND) Khamrah EDP by Lattafa','',R)['name'],'Khamrah')
 

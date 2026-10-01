@@ -401,7 +401,8 @@
         "max_ml": 20,
         "requires_sample_evidence": true
       },
-      "checkout_evidence": "Browser cart handoff verified Khamrah 1ml and quantity 1"
+      "checkout_evidence": "Browser cart handoff verified Khamrah 1ml and quantity 1",
+      "title_brand_position": "after_separator"
     },
     {
       "id": "norcalscentsco",
