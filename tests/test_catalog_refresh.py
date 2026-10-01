@@ -83,6 +83,26 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(identity('Coach Parfum (women)','Coach',R)['name'],'Coach (women)')
         self.assertEqual(identity('(RARE FIND) Khamrah EDP by Lattafa','',R)['name'],'Khamrah')
 
+    def test_tobacco_vanille_catalog_formats_and_metadata_group(self):
+        variants=[{'id':11,'title':'2ml sample','price':'3.00','available':True}]
+        formats=[('Tobacco Vanille','Tom Ford','Eau de Parfum'),('Tom Ford Tobacco Vanille Eau de Parfum','My Store',''),('Sample/Decant Tom Ford Tobacco Vanille Eau de Parfum 10ml For Men & Women','Tom Ford','')]
+        offers=[]
+        for i,(title,vendor,kind) in enumerate(formats):
+            item=raw(i+1);item.update(title=title,vendor=vendor,product_type=kind,variants=variants)
+            offers.append(normalize_product(item,{**R,'id':str(i)},NOW))
+        self.assertEqual(len({p['fragrance_id'] for p in offers}),1)
+        self.assertEqual(offers[0]['fragrance']['name'],'Tobacco Vanille')
+        self.assertEqual(identity('Tom Ford - Tobacco Vanille (sample sizes)','My Store',R)['brand'],'Tom Ford')
+        self.assertEqual(identity('Creed Aventus Cologne Eau de Cologne','My Store',R)['name'],'Aventus Cologne')
+        inspired=raw();inspired['title']='Charuto Tobacco Vanille by Paris Corner - Sample'
+        self.assertNotEqual(normalize_product(inspired,R,NOW)['fragrance_id'],offers[0]['fragrance_id'])
+        parfum=raw();parfum['title']='Tom Ford Tobacco Vanille Parfum Sample'
+        self.assertNotEqual(normalize_product(parfum,R,NOW)['fragrance_id'],offers[0]['fragrance_id'])
+        conflict=raw();conflict.update(title='Tom Ford Tobacco Vanille EDP Sample',product_type='Extrait de Parfum')
+        self.assertTrue(normalize_product(conflict,R,NOW)['fragrance_id'].startswith('listing:'))
+        inspiration=raw();inspiration.update(title='Tobacco Vanille by Tom Ford Sample',body_html='Inspired by Eau de Parfum',product_type='')
+        self.assertIsNone(normalize_product(inspiration,R,NOW)['fragrance']['concentration'])
+
     def test_history_new_restocks_removed_and_collapse(self):
         a=normalize_product(raw(1,False),R,NOW);b=normalize_product(raw(2),R,NOW)
         initial=merge_snapshot(R,[a,b],None,NOW)

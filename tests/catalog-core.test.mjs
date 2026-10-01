@@ -16,3 +16,16 @@ test('price reconciliation, missing selections, per-currency ceilings and exclus
 test('legacy migration uses variant IDs and preserves price ceiling',()=>{const o=offer('decantified'),offers=new Map([[o.id,o]]);const migrated=migrateCart({cart:[{productId:999,variant:{id:11,price:'1.90'}}],exclusions:[{term:'rose'}],maxPrice:3},offers,retailers);assert.equal(migrated.cart[0].offerId,'decantified:1');assert.equal(migrated.cart[0].snapshot.variant.price_minor,190);assert.equal(migrated.ceilings.USD,300);assert.throws(()=>migrateCart({cart:[{variant:{id:'missing'}}]},offers,retailers));});
 test('checkout only verified retailer, ready original variant IDs, safe origins',()=>{const a=offer(),b=offer('b');const items=[a,b].map(o=>({...selectionSnapshot(o,o.variants[0],retailers.get(o.retailer_id)),offer:o,variant:o.variants[0],ready:true,reasons:[],retailer:retailers.get(o.retailer_id),status:'in_stock'}));assert.match(checkoutUrl(items,retailers.get('a')),/a\.example\/cart\/11:1/);assert.equal(checkoutUrl(items,retailers.get('b')),'');assert.equal(safeRetailerUrl('javascript:alert(1)',retailers.get('a')),'');assert.equal(safeRetailerUrl('https://evil.example',retailers.get('a')),'');assert.match(cartCsv(items,retailers),/last_checked/);assert.match(cartCsv(items,retailers),/"Beta"/);});
 test('newly listed badge does not label baseline import',()=>{const a=offer();assert.equal(newlyListed(a,now),false);a.initial_import=false;assert.equal(newlyListed(a,now),true);assert.equal(newlyListed(a,now+31*86400e3),false);});
+
+test('matching names surface other retailers without merging unverified concentrations',()=>{
+ const a=offer(),b=offer('b');b.fragrance_id='listing:b:1';b.fragrance.concentration=null;
+ const groups=groupFragrances([a,b],retailers,selected,false,now);
+ assert.equal(groups.length,2);assert.equal(groups[0].offers.length,1);
+ assert.equal(groups.find(g=>g.id===a.fragrance_id).relatedOffers[0].id,b.id);
+ const result=searchFragrances(groups,[{term:'bergamot',layer:'top'}]);
+ assert.equal(result.find(g=>g.id===a.fragrance_id).relatedOffers.length,1);
+ assert.equal(alternativesFor({offer:a},new Map([[b.id,b]]),retailers,now).length,0);
+ b.fragrance.concentration='Parfum';assert.equal(groupFragrances([a,b],retailers,selected,false,now)[0].relatedOffers.length,0);
+ b.fragrance.concentration=null;b.fragrance.brand='Another House';assert.equal(groupFragrances([a,b],retailers,selected,false,now)[0].relatedOffers.length,0);
+ b.fragrance.brand='House';assert.equal(groupFragrances([a,b],retailers,new Set(['a']),false,now)[0].relatedOffers.length,0);
+});

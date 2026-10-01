@@ -21,7 +21,24 @@ SCHEMA = 2
 SAMPLE = re.compile(r"\b(?:samples?|decants?|décants?|decanted|staaltjes?|muestras?|amostras?|campioni|campione|échantillons?|atomizers?|spray vial|travel spray|spray sample)\b", re.I)
 NON_FRAGRANCE = re.compile(r"\b(?:gift card|empty (?:bottle|vial)|accessories|discovery set|sample set|bundle|subscription)\b", re.I)
 CONCENTRATION = re.compile(r"\b(extrait(?: de parfum)?|eau de parfum|eau de toilette|eau de cologne|EDP|EDT|EDC|parfum)\b", re.I)
-BRAND_ALIASES = {"paris corner": "Paris Corner", "riiffs": "RiiFFS", "maison alhambra": "Maison Alhambra"}
+BRAND_ALIASES = json.loads((ROOT / "brand-aliases.json").read_text())["aliases"]
+CONCENTRATION_NAMES = {"eau de parfum":"EDP","edp":"EDP","eau de toilette":"EDT","edt":"EDT","eau de cologne":"EDC","edc":"EDC","extrait de parfum":"Extrait","extrait":"Extrait","parfum":"Parfum"}
+
+def canonical_brand(value):
+    return BRAND_ALIASES.get(str(value).casefold().strip(), value)
+
+def explicit_concentrations(raw, description):
+    """Read explicit metadata and labeled prose; ignore inspiration references."""
+    values = [str(raw.get("product_type", ""))]
+    tags = raw.get("tags", [])
+    if isinstance(tags, str): tags = tags.split(',')
+    values.extend(t if isinstance(t, str) else t.get('name', '') for t in tags)
+    for attribute in raw.get('attributes', []):
+        if normalize(attribute.get('name', '')) in {'concentration', 'perfume type', 'fragrance type'}:
+            values.extend(t.get('name', '') for t in attribute.get('terms', []))
+    values.extend(m[1].strip() for m in re.finditer(r'(?im)^\s*(?:concentration|fragrance type|perfume type|concentración|concentratie)\s*:\s*([^\n.;]+)', description))
+    return {CONCENTRATION_NAMES[m[0].lower()] for value in values if (m := CONCENTRATION.fullmatch(value.strip()))}
+
 
 
 def apply_reviewed_identity(product):
@@ -29,6 +46,8 @@ def apply_reviewed_identity(product):
     path = ROOT / 'fragrance-mappings.json'
     mappings = json.loads(path.read_text())['mappings'] if path.exists() else []
     identity_data = product['fragrance']
+    if identity_data.get('conflict'):
+        return product
     for mapping in mappings:
         if normalize(identity_data.get('brand')) != normalize(mapping['brand']) or normalize(identity_data['name']) != normalize(mapping['name']):
             continue
@@ -181,14 +200,32 @@ def minor_price(value, already_minor=False):
     return int(amount)
 
 
-def identity(name, brand, retailer):
+def identity(name, brand, retailer, concentrations=None):
     evidence = []
     # Remove retailer merchandising badges, not meaningful fragrance flankers.
     name = re.sub(r'^\s*\((?:rare find|rare gem|\d{4} release)\)\s*[–—-]?\s*', '', name, flags=re.I)
     name = re.sub(r"\([^)]*(?:sample|decant)[^)]*\)", "", name, flags=re.I).strip()
+    name = re.sub(r'^\s*(?:sample/decant|decant/sample|sample|decant)(?:\s+of)?\s+', '', name, flags=re.I)
+    name = re.sub(r'^\s*\d+(?:[.,]\d+)?\s*ml(?:\s*[/|,]\s*\d+(?:[.,]\d+)?\s*ml)*\s+', '', name, flags=re.I)
+    name = re.sub(r'\s+\d+(?:[.,]\d+)?\s*ml(?:\s+for\s+(?:men|women|man|woman|unisex|men & women))?\s*$', '', name, flags=re.I)
     title = re.sub(r"\s*[|–—-]?\s*(?:fragrance sample|sample sizes|sample decant|decant sample|sample/decant|sample|decant)(?:\s*[/|–—-]\s*(?:sample|decant))?\b.*$", "", name, flags=re.I).strip(" |–—-")
     title = re.sub(r"\([^)]*(?:sample|decant)[^)]*\)", "", title, flags=re.I).strip()
     # Product titles often explicitly state a brand more reliably than Shopify vendor.
+    brand = canonical_brand(brand)
+    # Reviewed brand tokens must occur at the title prefix or a dedicated pipe segment.
+    for alias in sorted(BRAND_ALIASES, key=len, reverse=True):
+        prefix = re.match(r'^' + re.escape(alias) + r'(?=\s|[|–—-])', title, re.I)
+        remaining = title[prefix.end():].strip(' |–—-') if prefix else ''
+        substantive = re.sub(r'\b(?:women|men|woman|man|unisex|for|pour)\b|[()\s]', '', CONCENTRATION.sub('', remaining), flags=re.I)
+        if prefix and substantive:
+            brand = BRAND_ALIASES[alias]
+            title = title[prefix.end():].strip(' |–—-')
+            evidence.append('reviewed brand explicitly stated at title prefix')
+            break
+    parts = [p.strip() for p in title.split('|')]
+    if len(parts) > 1 and parts[1].casefold() in BRAND_ALIASES:
+        brand, title = BRAND_ALIASES[parts[1].casefold()], parts[0]
+        evidence.append('reviewed brand explicitly stated in title segment')
     by = re.search(r"\s+by\s+([^|]+)$", title, re.I)
     dash = re.search(r"^(.+?)\s+[–—-]\s+([^–—-]+)$", title)
     if by:
@@ -204,20 +241,29 @@ def identity(name, brand, retailer):
         evidence.append("retailer product brand field")
     if brand and (normalize(brand) in {normalize(retailer['name']), normalize(retailer['id']), normalize(retailer['original_domain']), 'my store'} or re.search(r"inspir|sample|decant", brand, re.I)):
         brand = ""
-    brand = BRAND_ALIASES.get(normalize(brand), brand)
+    brand = canonical_brand(brand)
     conc_match = CONCENTRATION.search(title)
     concentration = None
     if conc_match:
-        concentration = {"eau de parfum": "EDP", "edp": "EDP", "eau de toilette": "EDT", "edt": "EDT", "eau de cologne": "EDC", "edc": "EDC", "extrait de parfum": "Extrait", "extrait": "Extrait", "parfum": "Parfum"}[conc_match[0].lower()]
+        concentration = CONCENTRATION_NAMES[conc_match[0].lower()]
         title = (title[:conc_match.start()] + title[conc_match.end():]).strip(" |–—-")
         evidence.append("concentration explicitly stated in listing title")
+    strengths = set(concentrations or [])
+    if concentration: strengths.add(concentration)
+    conflict = len(strengths) > 1
+    if not conflict and strengths:
+        if not concentration: evidence.append('concentration explicitly stated in product metadata')
+        concentration = next(iter(strengths))
+    elif conflict:
+        concentration = None
+        evidence.append('conflicting concentration evidence; kept separate')
     if brand:
         without_brand = re.sub(r"^" + re.escape(brand) + r"\s+[–—-]?\s*", "", title, flags=re.I).strip()
         # An eponymous perfume (e.g. Coach Parfum) still has a name after concentration removal.
         if re.sub(r'\b(?:women|men|woman|man|unisex|for|pour)\b|[()\s]', '', without_brand, flags=re.I):
             title = without_brand
     title = re.sub(r"\s+", " ", title).strip()
-    return {"name": title or name, "brand": brand or None, "concentration": concentration, "evidence": evidence}
+    return {"name": title or name, "brand": brand or None, "concentration": concentration, "evidence": evidence, "conflict": conflict}
 
 
 def normalize_product(raw, retailer, observed):
@@ -285,7 +331,7 @@ def normalize_product(raw, retailer, observed):
     if not woo and not raw.get('handle'):
         raise ValueError('Missing product handle')
     safe_url(url, retailer)
-    fragrance = identity(name, brand, retailer)
+    fragrance = identity(name, brand, retailer, explicit_concentrations(raw, description))
     if fragrance['brand'] and fragrance['concentration']:
         key = "|".join(normalize(fragrance[k]) for k in ('brand', 'name', 'concentration'))
         fragrance_id = "fragrance:" + hashlib.sha256(key.encode()).hexdigest()[:24]

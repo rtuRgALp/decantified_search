@@ -35,14 +35,16 @@ export function sortOffers(offers, retailers, comparison = null) {
   });
 }
 export function groupFragrances(offers, retailers, selected, includeSoldOut = false, now = Date.now()) {
-  const groups = new Map();
+  const groups = new Map(), byName = new Map();
+  const nameKey = fragrance => [fragrance.brand,fragrance.name].map(value=>String(value||'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim()).join('|');
   for (const offer of offers) {
     if (!selected.has(offer.retailer_id) || (!includeSoldOut && !availableVariants(offer,now).length)) continue;
+    if(offer.fragrance.brand){const key=nameKey(offer.fragrance);if(!byName.has(key))byName.set(key,[]);byName.get(key).push(offer);}
     const id = offer.fragrance_id;
     if (!groups.has(id)) groups.set(id, {id, name: offer.fragrance.name, brand: offer.fragrance.brand, concentration: offer.fragrance.concentration, offers: []});
     groups.get(id).offers.push(offer);
   }
-  return [...groups.values()].map(group => ({...group, offers: sortOffers(group.offers,retailers)})).sort((a,b) => compareText(a.name,b.name) || compareText(a.id,b.id));
+  return [...groups.values()].map(group => ({...group, offers: sortOffers(group.offers,retailers), relatedOffers: sortOffers((byName.get(nameKey(group))||[]).filter(o=>o.fragrance_id!==group.id && (!group.concentration || !o.fragrance.concentration)),retailers)})).sort((a,b) => compareText(a.name,b.name) || compareText(a.id,b.id));
 }
 export function searchFragrances(groups, selections, mode='any') {
   if (!selections.length) return [];
