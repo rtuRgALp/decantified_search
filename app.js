@@ -20,7 +20,7 @@ function hydrate(){
     if(legacy)persist();
   }catch(error){state.storageBlocked=true;showToast(error.message+' Original saved data has been retained.');}
 }
-async function jsonFetch(path){const response=await fetch(path,{cache:'no-cache'});if(!response.ok)throw Error('Catalog request failed ('+response.status+')');return response.json();}
+async function jsonFetch(path){const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),30000);try{const response=await fetch(path,{cache:'no-cache',signal:controller.signal});if(!response.ok)throw Error('Catalog request failed ('+response.status+')');return await response.json();}finally{clearTimeout(timeout);}}
 async function loadCatalogs(initial=false){
   const [registry,manifest]=await Promise.all([jsonFetch('retailers.json'),jsonFetch('catalogs/manifest.json')]);
   if(registry.schema_version!==2||manifest.schema_version!==2)throw Error('Unsupported catalog version');

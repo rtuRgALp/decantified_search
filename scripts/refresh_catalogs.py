@@ -334,6 +334,8 @@ def refresh_one(retailer, output):
         if retailer['adapter'] == 'shopify':
             verify_shopify_currency(retailer)
         raw = fetch_shopify(retailer) if retailer['adapter'] == 'shopify' else fetch_woocommerce(retailer)
+        if not raw:
+            raise ValueError('Unexpected zero source catalog quarantined; review required')
         reviewed = retailer['decant_rule'].get('reviewed_catalog')
         verified_ids = set()
         if reviewed:

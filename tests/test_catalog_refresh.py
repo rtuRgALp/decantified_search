@@ -118,6 +118,14 @@ class CatalogTests(unittest.TestCase):
             self.assertEqual(report['status'],'retained');self.assertEqual(path.read_bytes(),before)
             self.assertEqual(report['last_success_at'],NOW)
 
+    def test_unexpected_zero_source_catalog_is_quarantined(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with patch('scripts.refresh_catalogs.verify_shopify_currency'), patch('scripts.refresh_catalogs.fetch_shopify',return_value=[]):
+                report=refresh_one(R,Path(folder))
+            self.assertEqual(report['status'],'unavailable')
+            self.assertIn('zero source catalog',report['reason'])
+            self.assertFalse((Path(folder)/'decantified.json').exists())
+
     @patch('scripts.refresh_catalogs.time.sleep')
     def test_woocommerce_variation_prices_and_stock(self,_):
         retailer=next(r for r in REGISTRY if r['id']=='scentswithsense')
